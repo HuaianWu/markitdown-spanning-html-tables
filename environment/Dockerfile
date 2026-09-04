@@ -14,7 +14,10 @@ RUN git clone https://github.com/microsoft/markitdown . \
  && git reflog expire --expire=now --all \
  && git gc --prune=now \
  && { test ! -s .gitmodules || git submodule update --init --recursive; }
-RUN pip install --no-cache-dir -e "packages/markitdown" pytest
+# Monorepo: the task lives in packages/markitdown; its `all` extra brings the converter dependencies
+# (python-pptx, lxml, pandas, ...) that the test suite imports.
+RUN pip install --no-cache-dir -e "packages/markitdown[all]" "pytest==9.1.1" \
+    && test -z "$(git status --porcelain)"
 
 # Disable git commit hooks (pre-commit, husky etc.): dev-workflow tooling, not task content.
 # Broken hook environments otherwise block the agent's (and oracle's) commits.
